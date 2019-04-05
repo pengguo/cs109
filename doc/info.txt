@@ -1,0 +1,1 @@
+https://nbviewer.jupyter.org/github/cs109/2014/blob/master/homework-solutions/HW3-solutions.ipynb
