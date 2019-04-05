@@ -32,7 +32,20 @@ def problem1():
     print salaries.columns
 
     id_groups = salaries.groupby(by=['playerID'])['playerID', 'salary'].mean()
-    meadin_salaries = pd.merge
+    median_salaries = pd.merge(master[['playerID', 'nameFirst', 'nameLast']], id_groups, left_on='playerID', right_index=True, how='inner')
+    print median_salaries.shape
+
+    print teams.sample(2)
+    sub_teams = teams[(teams['G']==162) & (teams['yearID']>1947)].copy()
+    print sub_teams.shape
+    sub_teams["1B"] = sub_teams.H - sub_teams["2B"] - sub_teams["3B"] - sub_teams["HR"]
+    sub_teams["PA"] = sub_teams.BB + sub_teams.AB
+
+    for col in ["1B", "2B", "3B", "HR", "BB"]:
+        sub_teams[col] = sub_teams[col] / sub_teams.PA
+
+    stats = sub_teams[["teamID", "yearID", "W", "1B", "2B", "3B", "HR", "BB"]].copy()
+    stats.head()
 
 def main():
     problem1()
