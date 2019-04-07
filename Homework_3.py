@@ -45,7 +45,68 @@ def problem1():
         sub_teams[col] = sub_teams[col] / sub_teams.PA
 
     stats = sub_teams[["teamID", "yearID", "W", "1B", "2B", "3B", "HR", "BB"]].copy()
-    stats.head()
+    print stats.shape
+
+    # for col in ["1B", "2B", "3B", "HR", "BB"]:
+    #     plt.scatter(stats.yearID, stats[col], c="g", alpha=0.5)
+    #     plt.title(col)
+    #     plt.xlabel('Year')
+    #     plt.ylabel('Rate')
+    #     plt.show()
+
+    def mean_normal(df):
+        sub_rates = df[["1B", "2B", "3B", "HR", "BB"]]
+        df[["1B", "2B", "3B", "HR", "BB"]] = sub_rates - sub_rates.mean(axis=0)
+        return df
+
+    stats = stats.groupby('yearID').apply(mean_normal)
+    print stats.head(1)
+
+    # linear fit
+    from sklearn import linear_model
+    clf = linear_model.LinearRegression()
+
+    stat_train = stats[stats.yearID < 2002]
+    stat_test = stats[stats.yearID >= 2002]
+
+    XX_train = stat_train[["1B", "2B", "3B", "HR", "BB"]].values
+    XX_test = stat_test[["1B", "2B", "3B", "HR", "BB"]].values
+
+    YY_train = stat_train.W.values
+    YY_test = stat_test.W.values
+
+    clf.fit(XX_train, YY_train)
+
+    print 'mse=%.2f' % (np.mean((YY_test - clf.predict(XX_test)) ** 2  ))
+
+    # plt.plot(YY_test, color='r')
+    # plt.plot(clf.predict(XX_test))
+    # plt.show()
+
+    # problem_1f
+    subPlayers = players[(players.AB + players.BB > 500) & (players.yearID > 1947)].copy()
+
+    subPlayers["1B"] = subPlayers.H - subPlayers["2B"] - subPlayers["3B"] - subPlayers["HR"]
+    subPlayers["PA"] = subPlayers.BB + subPlayers.AB
+
+    for col in ["1B", "2B", "3B", "HR", "BB"]:
+        subPlayers[col] = subPlayers[col] / subPlayers.PA
+
+    # Create playerstats DataFrame
+    playerstats = subPlayers[["playerID", "yearID", "1B", "2B", "3B", "HR", "BB"]].copy()
+    playerstats = playerstats.groupby(by=['playerID']).apply(mean_normal)
+
+    def meanNormalizePlayerLS(df):
+        df = df[['playerID', '1B', '2B', '3B', 'HR', 'BB']].mean()
+        return df
+
+    def getyear(x):
+        return int(x[0:4])
+
+    playerLS = playerstats.groupby('playerID').apply(meanNormalizePlayerLS).reset_index()
+    playerLS = pd.merge(master[["playerID","debut","finalGame"]], playerLS, how='inner', on="playerID")
+    playerLS.head(1)
+    print 'done!!!'
 
 def main():
     problem1()
