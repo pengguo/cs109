@@ -105,7 +105,16 @@ def problem1():
 
     playerLS = playerstats.groupby('playerID').apply(meanNormalizePlayerLS).reset_index()
     playerLS = pd.merge(master[["playerID","debut","finalGame"]], playerLS, how='inner', on="playerID")
-    playerLS.head(1)
+    print playerLS.shape
+    print playerLS.columns
+    playerLS["debut"] = playerLS.debut.apply(getyear)
+    playerLS["finalGame"] = playerLS.finalGame.apply(getyear)
+    cols = list(playerLS.columns)
+    cols[1:3] = ["minYear", "maxYear"]
+    playerLS.columns = cols
+    avg_rates = playerLS[['1B', '2B', '3B', 'HR', 'BB']].values
+    playerLS['OPW'] = clf.predict(avg_rates)
+    print playerLS.sample(1)
     print 'done!!!'
 
 def main():
