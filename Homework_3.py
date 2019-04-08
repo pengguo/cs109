@@ -115,10 +115,87 @@ def problem1():
     avg_rates = playerLS[['1B', '2B', '3B', 'HR', 'BB']].values
     playerLS['OPW'] = clf.predict(avg_rates)
     print playerLS.sample(1)
-    print 'done!!!'
+
+    # problem 1j
+    from collections import defaultdict
+    def find_pos(df):
+        positions = df.POS
+        d = defaultdict(int)
+        for pos in positions:
+            d[pos] += 1
+        result = max(d.iteritems(), key=lambda x: x[1])
+        return result[0]
+
+    positions_df = fielding.groupby("playerID").apply(find_pos)
+    positions_df = positions_df.reset_index()
+    positions_df = positions_df.rename(columns={0: "POS"})
+
+    playerLS_merged = pd.merge(positions_df, playerLS, how='inner', on="playerID")
+    playerLS_merged = pd.merge(playerLS_merged, median_salaries, how='inner', on=['playerID'])
+    active = playerLS_merged[(playerLS_merged["minYear"] <= 2002) & \
+                             (playerLS_merged["maxYear"] >= 2003) & \
+                             (playerLS_merged["maxYear"] - playerLS_merged["minYear"] >= 3)]
+    fig = plt.figure()
+    ax = fig.gca()
+    ax.scatter(active.salary / 10 ** 6, active.OPW, alpha=0.5, c='red')
+    ax.set_xscale('log')
+    ax.set_xlabel('Salary (in Millions) on log')
+    ax.set_ylabel('OPW')
+    ax.set_title('Relationship between Salary and Predicted Number of Wins')
+    plt.show()
+
+    print 'problem1 done!!!'
+
+def problem2():
+    # load the iris data set
+    iris = sklearn.datasets.load_iris()
+    X = iris.data
+    Y = iris.target
+    print X.shape, Y.shape
+
+    # put test data aside
+    X_train, X_test, Y_train, Y_test = \
+        sklearn.model_selection.train_test_split(X, Y, test_size=0.33, random_state=42)
+    print X_train.shape, Y_train.shape
+
+    # make a scatter plot of the data in two dimensions
+    svd = sklearn.decomposition.TruncatedSVD(n_components=2)
+    X_train_centered = X_train - np.mean(X_train, axis=0)
+    X_2d = svd.fit_transform(X_train_centered)
+
+    # sns.set_style('white')
+    # plt.scatter(X_2d[:, 0], X_2d[:, 1], c=Y_train, s=50, cmap=plt.cm.prism)
+    # plt.xlabel('PC1')
+    # plt.ylabel('PC2')
+    # plt.title('First two PCs using iris data')
+    # plt.show()
+    # use cross validation to find the optimal value for k
+    k = np.arange(20) + 1
+
+    parameters = {'n_neighbors': k}
+    knn = sklearn.neighbors.KNeighborsClassifier()
+    clf = sklearn.model_selection.GridSearchCV(knn, parameters, cv=10)
+    clf.fit(X_train, Y_train)
+
+    print clf.best_score_, clf.best_params_
+
+    scores = [x for x in clf.cv_results_['mean_test_score']]
+
+    # score_means = np.mean(scores, axis=1)
+
+    sns.boxplot(scores)
+    # plt.scatter(k, score_means, c='k', zorder=2)
+    plt.ylim(0.8, 1.1)
+    plt.title('Accuracy as a function of $k$')
+    plt.ylabel('Accuracy')
+    plt.xlabel('Choice of k')
+    plt.show()
+
+    print 'problem2 done!!!'
 
 def main():
-    problem1()
+    # problem1()
+    problem2()
 
 
 if __name__ == '__main__':
